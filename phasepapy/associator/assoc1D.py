@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+#
+# Includes some performance modifications by avaruustursas
+# These changes were done during June-August'18
+# 08.08.2018 -avaruustursas
+
 from .tables1D import *
 from .tt_stations_1D import *
 from .func1D import *
@@ -11,6 +17,8 @@ from operator import itemgetter
 from itertools import combinations
 import logging
 #import time       "from datetime import *" will import time, name space will be overwritten
+
+import itertools # 08.08.2018 -avaruustursas
 
 
 class LocalAssociator():
@@ -44,7 +52,12 @@ class LocalAssociator():
     tmp, d_diff                   =         tt_km(self.tt_stations_db_1D,self.max_km) # From max distance set our maximum travel_time                                            # From max distance set our maximum travel_time
     self.max_tt                   =         tmp.s_tt
     self.max_s_p                  =         tmp.s_p
-    self.min_s_p                  =         self.tt_stations_db_1D.query(TTtable1D.s_p).filter(TTtable1D.d_km==0.0).first()[0]
+    # 08.08.2018 avaruustursas
+    # There is a problem if the minimum S-P value from tt-table for near surface
+    # source depths is exactly 0.0. This conditional oneliner fixes this.
+    # If the mininum S-P value is 0.0 then find and take the first non zero value. 
+    self.min_s_p                  =         self.tt_stations_db_1D.query(TTtable1D.s_p).filter(TTtable1D.d_km==0.0).first()[0] if self.tt_stations_db_1D.query(TTtable1D.s_p).filter(TTtable1D.d_km==0.0).first()[0] > 0.0 else self.tt_stations_db_1D.query(TTtable1D.s_p).filter(TTtable1D.d_km>0.0).first()[0]
+    #self.min_s_p                  =         self.tt_stations_db_1D.query(TTtable1D.s_p).filter(TTtable1D.d_km==0.0).first()[0]
     self.aggregation              =         aggregation
     self.aggr_window              =         self.aggregation * self.min_s_p
     self.aggr_norm                =         aggr_norm         # L1 takes the mean; L2 takes the median
