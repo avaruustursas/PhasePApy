@@ -158,20 +158,49 @@ class LocalAssociator():
         #print 'cb',cb
         
         rms_sort = []
-        for i in range(len(cb)):
-          radius_cb = cb[i]
-          if len(radius_cb) >= self.nsta_declare: # self.nsta_declare has to be greater than or equal to 3
-            location=fmin(locating, [lon,lat], radius_cb, disp = 0) # disp = 1 disp : bool, Set to True to print convergence messages.
-            residual_minimum=residuals_minimum(location,radius_cb)
-            rms_sort.append((location, residual_minimum, i))
-            
+        # 8.8.2018 avaruustursas
+        # Because the modification of self.comb() method to return generator
+        # this part must be refactored to take account the change in data structure.
+        # Also the rms_sort is refactored a bit as it seems that only one of the items
+        # is used after this. Instead of index i the actual candidate data tuple is
+        # in the list and cb generator isn't used after this anymore
+        for i,radius_cb in enumerate(cb):
+            if len(radius_cb) >= self.nsta_declare: # self.nsta_declare has to be greater than or equal to 3
+                location=fmin(locating, [lon,lat], radius_cb, disp = 0) # disp = 1 disp : bool, Set to True to print convergence messages.
+                residual_minimum=residuals_minimum(location,radius_cb)
+                # now the changes to account the new data structure which can't be indexed
+                if len(rms_sort) > 0:
+                    res_min = rms_sort[0][1] # get the minimum value
+                    if residual_minimum > res_min:
+                        continue
+                    elif residual_minimum < res_min:
+                        # new one found, new list from it
+                        rms_sort = [(location,residual_minimum,radius_cb)]
+                    else:
+                        # if there are multiple items with the same minimum residual
+                        rms_sort.append((location,residual_minimum,radius_cb))
+                else: # empty list
+                    rms_sort.append((location, residual_minimum, radius_cb))
+        # the original
+        # for i in range(len(cb)):
+        #   radius_cb = cb[i]
+        #   if len(radius_cb) >= self.nsta_declare: # self.nsta_declare has to be greater than or equal to 3
+        #     location=fmin(locating, [lon,lat], radius_cb, disp = 0) # disp = 1 disp : bool, Set to True to print convergence messages.
+        #     residual_minimum=residuals_minimum(location,radius_cb)
+        #     rms_sort.append((location, residual_minimum, i))
+        # 
+
         # It is possible to have empty rms_sort
         if rms_sort:
           rms_sort.sort(key = itemgetter(1))
           loc, rms, index = rms_sort[0]  # loc is the location before outlier cutoff
           lon = loc[0]
           lat = loc[1]
-          matches = cb[index]  # matches is one of combination of radius.append([candi.sta, lon, lat, candi.d_km, candi.delta, i]) 
+          # 8.8.2018 avaruustursas
+          # cb[index] can't be used but the wanted data is in the last item of
+          # the rms_sort list.
+          matches = rms_sort[0][-1]
+          #matches = cb[index]  # matches is one of combination of radius.append([candi.sta, lon, lat, candi.d_km, candi.delta, i]) 
           #print 'location: ', lat, lon, rms
           #print 'matches',matches
           
@@ -295,25 +324,66 @@ class LocalAssociator():
 
             
   # create the combinations from different stations
+  # 8.8.2018 avaruustursas
+  # the original method is rather ineffective and possibly very slow
+  # it is almost always faster to just generate the good combinations
+  # than creating all possible combinations and removing the bad ones.
   def comb(self,tt):
     L = len(set([item[0] for item in tt]))   # length of the set(sta)
+    
+    # 8.8.2018 avaruustursas
+    # a much faster method and by using python iterators memory is also saved.
+    if len(tt) > 0 and L > 0:
+        # first create a dictionary of the data with the station codes as keys
+        # and values are lists of stations candidates
+        # this could be improved, but using this working version
+        data_dict = {}
+        for item in tt:
+            station = item[0]
+            if station in data_dict:
+                data_dict[station].append(item)
+            else:
+                data_dict[station] = [item]
+        # create sorted list of the datalists and their lengths
+        temp = sorted([(sta,len(data_dict[sta])) for sta in data_dict],key= lambda x: x[1], reverse=True)
+        station_data,l = zip(*temp) # the station data lists and lengths
+        sorted_data = [data_dict[x] for x in sta]
+        cb_result = (x for x in itertools.product(*sorted_data)) # return a iterator which doesn't consume memory
+        return cb_result
+    # give the trivial case to the original one 8.8.2018 avaruustursas
     cb = list(combinations((tt),L))          # combinations of the array, some of them are repeated such as (sta1, sta1, sta2,...)
     
     # remove those combinations of repeated station
-    index = []
-    for i in range(len(cb)):
-      temp = []
-      for j in range(L):
-        temp.append(cb[i][j][0])
-      l = len(set(temp))
-      if l < L:
-        index.append(i) 
-    index.reverse()
-    for i in index:
-      del cb[i]
- 
+    # 8.8.2018 avaruustursas
+    # the original commented out method is quite slow
+    cb_result = []
+    for combi in cb:
+        # 8.8.2018 avaruustursas
+        # Only include combinations that do not have repeated stations.
+        # Create python set comprehension of the combinations.
+        # If there are repeated stations the set will have less members than
+        # the number of stations. If so just skip to the next otherwise add the
+        # combination to the result list.
+        # This is the same as the original for loops but more faster.
+        if len({x[0] for x in combi}) <L:
+            continue
+        else:
+            cb_result.append(combi)
+    # index = []
+    # for i in range(len(cb)):
+    #   temp = []
+    #   for j in range(L):
+    #     temp.append(cb[i][j][0])
+    #   l = len(set(temp))
+    #   if l < L:
+    #     index.append(i) 
+    # index.reverse()
+    # for i in index:
+    #   del cb[i]
+    # 
     # only return combinations of different stations
-    return cb   
+    #return cb
+    return cb_result # 8.8.2018 avaruustursas   
 
   
 def datetime_statistics(dt_list,norm='L2'):
