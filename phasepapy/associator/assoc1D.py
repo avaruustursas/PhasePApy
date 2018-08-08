@@ -435,7 +435,7 @@ def pick_cluster(session,picks,pickwindow,pickaveraging_norm,counter):
     picks_new.append(picks[0])
     pick_modified=PickModified(picks[0].sta,picks[0].chan,picks[0].net,picks[0].loc,picks[0].time,picks[0].phase,round(pickstd,3),picks[0].assoc_id)
     session.add(pick_modified)
-    session.commit()
+    #session.commit() # going to use only one commit instead of after every addition 8.8.2018 avaruustursas
     
   # more than one pick in picks
   else:
@@ -477,7 +477,7 @@ def pick_cluster(session,picks,pickwindow,pickaveraging_norm,counter):
       picks_new.append(pick)
       pick_modified=PickModified(pick.sta,pick.chan,pick.net,pick.loc,pick.time,pick.phase,round(pickstd,3),pick.assoc_id)
       session.add(pick_modified)
-      session.commit()
+      #session.commit() # 8.8.2018 avaruustursas
       # next cluster
       j=i+1
       counter=counter+1
@@ -489,7 +489,7 @@ def pick_cluster(session,picks,pickwindow,pickaveraging_norm,counter):
           picks[-1].modified_id=counter # assign modified id to picks
           pick_modified=PickModified(picks[-1].sta,picks[-1].chan,picks[-1].net,picks[-1].loc,picks[-1].time,picks[-1].phase,round(pickstd,3),picks[-1].assoc_id)
           session.add(pick_modified)
-          session.commit()
+          #session.commit() # 8.8.2018 avaruustursas
         else:
           if picks[-1] in cluster:
             counter-=1
@@ -497,9 +497,10 @@ def pick_cluster(session,picks,pickwindow,pickaveraging_norm,counter):
             picks[-1].modified_id=counter
             pick_modified=PickModified(picks[-1].sta,picks[-1].chan,picks[-1].net,picks[-1].loc,picks[-1].time,picks[-1].phase,round(pickstd,3),picks[-1].assoc_id)
             session.add(pick_modified)
-            session.commit()
-        break     
+            #session.commit() # 8.8.2018 avaruustursas
+        break
   
+  session.commit() # only use commit here to save time 8.8.2018 avaruustursas
   return picks_new, counter
  
 
