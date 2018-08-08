@@ -390,9 +390,12 @@ def datetime_statistics(dt_list,norm='L2'):
   """ 
   Calculate the mean and standard deviations in seconds of a list of datetime values.
   """
-  offsets=[]
-  for dt in dt_list:
-    offsets.append((dt-dt_list[0]).total_seconds())
+  # 8.8.2018 avaruustursas
+  # this could be a bit faster with list comprehension
+  offsets = [(dt-dt_list[0]).total_seconds() for dt in dt_list]
+  #offsets=[]
+  #for dt in dt_list:
+  #   offsets.append((dt-dt_list[0]).total_seconds())
   if norm=='L1':
     mean_offsets=np.mean(offsets)
   elif norm=='L2':
