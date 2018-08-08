@@ -96,7 +96,8 @@ class LocalAssociator():
             ot=picks_modified[i].time-timedelta(seconds=tt.p_tt)
             new_candidate=Candidate(ot,sta,tt.d_km,tt.delta,picks_modified[i].time,picks_modified[i].id,picks_modified[j].time,picks_modified[j].id)
             self.assoc_db.add(new_candidate)
-            self.assoc_db.commit()  
+            #self.assoc_db.commit()
+      self.assoc_db.commit() # just commit once, 8.8.2018 avaruustursas
     
     #print 'create candidate time in seconds: ',time.time()-now1, 's'
       
