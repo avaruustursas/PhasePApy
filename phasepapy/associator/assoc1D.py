@@ -347,7 +347,7 @@ class LocalAssociator():
         # create sorted list of the datalists and their lengths
         temp = sorted([(sta,len(data_dict[sta])) for sta in data_dict],key= lambda x: x[1], reverse=True)
         station_data,l = zip(*temp) # the station data lists and lengths
-        sorted_data = [data_dict[x] for x in sta]
+        sorted_data = [data_dict[x] for x in station_data]
         cb_result = (x for x in itertools.product(*sorted_data)) # return a iterator which doesn't consume memory
         return cb_result
     # give the trivial case to the original one 8.8.2018 avaruustursas
