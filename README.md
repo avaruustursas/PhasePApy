@@ -1,5 +1,45 @@
 # PhasePApy 
 
+### __List of changes by avaruustursas (13.08.2018)__
+
+   _This repository has been forked and modified from the original. Following changes has been made to tailor the PhasePApy package more to the needs of the author of this fork._
+	 
+_Few optimizations has been made to the code to answer some of the bottlenecks found in the 1D association process. There might be a bit more optimization possible by refactoring parts of the code to use more of the language specific features of the Python or features added in later Python3 versions._
+
+___Python3.6 or later is required___
+
+___
+
+##### assoc1D.py
+###### Changes to database io operations
+   - SqlAlchemy `session.commit()` is used less often to save time from slow database operations
+
+	 _The original script uses_ `session.commit()` _more often than necessary, which might lead to performance problems. Instead of using commit after every addition of new data or updating the database, the commit function is used only after series of additions. This could save considerable amount of time as the database io operations could become bottleneck of the script running time performance._
+
+###### LocalAssociator contructor
+   - Adds a workaround on possible problems with near surface source depth (0.0km) travel time tables
+
+    _The original script doesn't handle situations where the minimum S-P value parsed from travel time table database is exactly zero. The minimum S-P value is now checked and if it would be set to zero a new value is queried from the travel time database to prevent problems._
+		
+		_If this approach doesn't work, then the user can manually edit the travel time database to include non-zero value for the minimum S-P value._
+		
+
+###### comb()
+   - Changes the way the candidate event tuples are generated.
+	   
+		_The original script creates every possible combination of the candidates with Python3_ `itertools.combinations()` _function and then deletes most of them if the combination tuple has same station more than once. This can lead _
+		
+		_Instead of this only the combinations having each station only once are created with Python3 function_ `itertools.product()`_. This potentially saves time and memory._
+   
+		_The result of the_ `comb()` _function isn't converted to python list to save memory. This change also has been accounted in the assoc1D_ `associate_candidates()` _method that uses the_ `comb()`.
+
+###### associate_candidates()
+   - Small changed to account the comb() method changes.
+
+     _The original_ `comb()` _method returned a list and after this indices were used to refer candidates from the list. As this is no longer possible with different python data structure a minor modification is in place to get things done without indices._
+
+___
+
 ## Reference 
 
 Chen,C., and A. A. Holland, (2016). PhasePApy: A Robust Pure Python Package for Automatic 
