@@ -19,9 +19,9 @@ ___
 ###### LocalAssociator contructor
    - Adds a workaround on possible problems with near surface source depth (0.0km) travel time tables
 
-    _The original script doesn't handle situations where the minimum S-P value parsed from travel time table database is exactly zero. The minimum S-P value is now checked and if it would be set to zero a new value is queried from the travel time database to prevent problems._
+  _The original script doesn't handle situations where the minimum S-P value parsed from travel time table database is exactly zero. The minimum S-P value is now checked and if it would be set to zero a new value is queried from the travel time database to prevent problems._
 		
-		_If this approach doesn't work, then the user can manually edit the travel time database to include non-zero value for the minimum S-P value._
+	_If this approach doesn't work, then the user can manually edit the travel time database to include non-zero value for the minimum S-P value._
 		
 
 ###### comb()
